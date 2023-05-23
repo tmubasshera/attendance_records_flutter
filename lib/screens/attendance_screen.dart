@@ -14,11 +14,11 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   List<AttendanceRecord> attendanceRecordsList = [];
   List<AttendanceRecord> filteredRecords = [];
-  bool toggle = false;
+  bool isToggleOn = false;
 
   void toggleTimeFormat() {
     setState(() {
-      toggle = !toggle;
+      isToggleOn = !isToggleOn;
     });
   }
 
@@ -45,6 +45,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    attendanceRecordsList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return Scaffold(
       backgroundColor: Colors.indigo,
       appBar: AppBar(
@@ -78,22 +79,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         itemBuilder: (context, index) 
         {
           final AttendanceRecord record = attendanceRecordsList[index];
-          final String formattedTimestamp = toggle? 
+          final String formattedTimestamp = isToggleOn? 
           DateFormat('dd MMM yyyy, h:mm a').format(record.timestamp)
               : timeAgoSinceDate(record.timestamp);
 
               return ListTile(
-                title: Text(record.name),
+                title: Text(record.name, style: TextStyle(color: Colors.white),),
                 subtitle: Text(formattedTimestamp),
                 trailing: Text(record.contact),
+                onTap: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>RecordDetailsScreen(record: record),));
+                },
               );              
         }),
         bottomNavigationBar: BottomAppBar(child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Display Time Format: '),
-            Switch(value: toggle
-            , onChanged: (value)=>toggleTimeFormat())
+            TimeFormatToggle(
+            isToggleOn: isToggleOn,
+            toggleTimeFormat: toggleTimeFormat,
+          ),
           ]),)
     );
   }
@@ -152,6 +158,24 @@ class RecordSearchDelegate extends SearchDelegate<String> {
       onPressed: () {
         //
       },
+    );
+  }
+}
+
+class TimeFormatToggle extends StatelessWidget {
+  final bool isToggleOn;
+  final VoidCallback toggleTimeFormat;
+
+  const TimeFormatToggle({
+    required this.isToggleOn,
+    required this.toggleTimeFormat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Switch(
+      value: isToggleOn,
+      onChanged: (value) => toggleTimeFormat(),
     );
   }
 }
