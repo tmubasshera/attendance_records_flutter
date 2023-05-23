@@ -1,5 +1,6 @@
 import 'package:attendance_records_flutter/models/attendance_record.dart';
 import 'package:attendance_records_flutter/screens/checkin_screen.dart';
+import 'package:attendance_records_flutter/screens/records_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; 
 
@@ -12,7 +13,7 @@ class AttendanceScreen extends StatefulWidget {
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
   List<AttendanceRecord> attendanceRecordsList = [];
-
+  List<AttendanceRecord> filteredRecords = [];
   bool toggle = false;
 
   void toggleTimeFormat() {
@@ -34,16 +35,43 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
+  void searchRecords(String keyword){
+    setState(() {
+      filteredRecords = attendanceRecordsList.where((record) {
+        return record.name.toLowerCase().contains(keyword.toLowerCase());
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.indigo,
       appBar: AppBar(
         title: Text('Attendance Records'),
+        actions: [
+          IconButton(
+            onPressed: () async{
+              final String? result = await showSearch(
+              context: context,
+              delegate: RecordSearchDelegate(searchRecords),
+              );
+
+              if (result!=null)
+                searchRecords(result);
+              
+            }, 
+            icon: Icon(Icons.search))
+        ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black,
         onPressed: openCheckInScreen,
-        child: Text("Check In"),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text("Check In", style: TextStyle(fontSize: 12),),
+          
+        ),
       ),
       body: ListView.builder(
         itemCount: attendanceRecordsList.length,
@@ -85,5 +113,45 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     } else {
       return 'Just now';
     }
+  }
+}
+
+class RecordSearchDelegate extends SearchDelegate<String> {
+  final Function(String) searchMethod;
+
+  RecordSearchDelegate(this.searchMethod);
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+          searchMethod('');
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    searchMethod(query);
+    return Container();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return Container();
+  }
+  
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        //
+      },
+    );
   }
 }
